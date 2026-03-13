@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Docente — Universidad de La Guajira</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --verde: #005c3b; --verde-vivo: #00a86b; --verde-bg: #edfaf3;
+    --dorado: #c9a84c; --dorado-claro: #f0d080;
+    --oscuro: #040f09; --blanco: #fff;
+    --gris-bg: #f2f6f3; --gris-borde: #dde8e2;
+    --texto: #0f2318; --texto-suave: #527060;
+    --rojo: #c0392b; --naranja: #e67e22;
+    --sombra: 0 4px 24px rgba(0,92,59,0.08);
+    --sombra-hover: 0 12px 36px rgba(0,92,59,0.16);
+  }
+
+  body { font-family: 'Outfit', sans-serif; background: var(--gris-bg); color: var(--texto); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    background: var(--oscuro);
+    padding: 0 28px; display: flex; align-items: center; justify-content: space-between;
+    height: 62px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(0,168,107,0.15);
+  }
+  .nav-marca { display: flex; align-items: center; gap: 12px; }
+  .nav-escudo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--verde), var(--verde-vivo));
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; box-shadow: 0 0 12px rgba(0,168,107,0.3);
+  }
+  .nav-nombre { font-family: 'Cormorant Garamond', serif; color: white; font-size: 17px; }
+  .nav-sub { color: rgba(255,255,255,0.35); font-size: 11px; display: block; letter-spacing: 0.5px; }
+  .nav-usuario { display: flex; align-items: center; gap: 12px; }
+  .nav-saludo { color: rgba(255,255,255,0.6); font-size: 12px; text-align: right; }
+  .nav-saludo strong { display: block; color: var(--dorado-claro); font-size: 13px; font-weight: 600; }
+  .btn-salir {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5); padding: 7px 14px; border-radius: 8px;
+    font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif;
+  }
+  .btn-salir:hover { background: rgba(192,57,43,0.25); color: #ff8080; border-color: rgba(192,57,43,0.4); }
+
+  /* TABS NAV */
+  .tabs-nav {
+    background: white; border-bottom: 1px solid var(--gris-borde);
+    display: flex; padding: 0 28px; gap: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .tab-nav-item {
+    padding: 15px 20px; border: none; background: none;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--texto-suave); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .tab-nav-item:hover { color: var(--verde); }
+  .tab-nav-item.activo { color: var(--verde); border-bottom-color: var(--verde); font-weight: 600; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
+  .tab-contenido { display: none; animation: fadeUp 0.35s ease both; }
+  .tab-contenido.activo { display: block; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  /* GPS CARD */
+  .gps-card {
+    background: white; border-radius: 18px; padding: 22px;
+    border: 1px solid var(--gris-borde); margin-bottom: 22px;
+    box-shadow: var(--sombra); position: relative; overflow: hidden;
+  }
+  .gps-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--verde), var(--verde-vivo), var(--dorado));
+  }
+  .gps-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .gps-icono { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .gps-icono.ok { background: var(--verde-bg); }
+  .gps-icono.error { background: #fff0f0; }
+  .gps-icono.cargando { background: #fff8e6; animation: gpsLatido 1.5s ease-in-out infinite; }
+  @keyframes gpsLatido { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  .gps-titulo { font-weight: 600; font-size: 14px; }
+  .gps-subtitulo { font-size: 12px; color: var(--texto-suave); }
+  .gps-barra { height: 5px; background: var(--gris-borde); border-radius: 3px; overflow: hidden; }
+  .gps-barra-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; background: linear-gradient(90deg, var(--verde), var(--verde-vivo)); }
+  .gps-detalle { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .gps-dato { background: var(--gris-bg); border-radius: 8px; padding: 7px 12px; font-size: 12px; color: var(--texto-suave); }
+  .gps-dato strong { display: block; color: var(--texto); font-size: 13px; }
+
+  /* SECCIÓN TITULO */
+  .seccion-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; color: var(--texto); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .badge-dia {
+    background: linear-gradient(135deg, var(--verde), var(--verde-vivo));
+    color: white; font-family: 'Outfit', sans-serif;
+    font-size: 11px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;
+    box-shadow: 0 3px 10px rgba(0,92,59,0.3);
+  }
+
+  /* CLASE CARD */
+  .clase-card {
+    background: white; border-radius: 18px;
+    border: 1px solid var(--gris-borde); margin-bottom: 14px;
+    box-shadow: var(--sombra); overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    animation: cardEntrada 0.4s ease both;
+  }
+  .clase-card:nth-child(1){animation-delay:0.05s}
+  .clase-card:nth-child(2){animation-delay:0.1s}
+  .clase-card:nth-child(3){animation-delay:0.15s}
+  @keyframes cardEntrada { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .clase-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-hover); }
+
+  .clase-header { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--gris-borde); }
+  .clase-hora-bloque {
+    background: linear-gradient(135deg, var(--verde), var(--verde-vivo));
+    border-radius: 14px; padding: 10px 16px; text-align: center; flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0,92,59,0.3);
+  }
+  .clase-hora { color: white; font-size: 17px; font-weight: 700; line-height: 1; font-family: 'Outfit', sans-serif; }
+  .clase-hora-fin { color: rgba(255,255,255,0.65); font-size: 11px; margin-top: 2px; }
+  .clase-info { flex: 1; }
+  .clase-materia { font-weight: 700; font-size: 15px; color: var(--texto); margin-bottom: 3px; }
+  .clase-salon { font-size: 12px; color: var(--texto-suave); display: flex; align-items: center; gap: 4px; }
+  .clase-estado-badge { padding: 5px 13px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+  .estado-disponible { background: var(--verde-bg); color: var(--verde); }
+  .estado-espera { background: #fff8e6; color: #9a6e00; }
+  .estado-registrado { background: #e8f0ff; color: #1a73e8; }
+  .estado-expirado { background: #fff0f0; color: var(--rojo); }
+
+  .clase-body { padding: 18px 22px; }
+  .btn-registrar {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, var(--verde), var(--verde-vivo));
+    border: none; border-radius: 13px; color: white;
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,92,59,0.3);
+  }
+  .btn-registrar::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transition: left 0.5s; }
+  .btn-registrar:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,92,59,0.45); }
+  .btn-registrar:hover::before { left: 150%; }
+  .btn-registrar:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-registrar.tardanza { background: linear-gradient(135deg, #d4830a, var(--naranja)); box-shadow: 0 4px 16px rgba(230,126,34,0.3); }
+  .clase-ya-registrada { display: flex; align-items: center; gap: 10px; background: var(--verde-bg); border-radius: 12px; padding: 12px 16px; border: 1px solid rgba(0,168,107,0.15); }
+  .clase-ya-registrada span { font-size: 13px; color: var(--verde); font-weight: 600; }
+
+  .sin-clases { text-align: center; padding: 56px 20px; background: white; border-radius: 18px; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); }
+  .sin-clases-icono { font-size: 48px; margin-bottom: 14px; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .sin-clases h3 { color: var(--texto); font-size: 17px; margin-bottom: 6px; }
+  .sin-clases p { color: var(--texto-suave); font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.abierto { display: flex; }
+  .modal { background: white; border-radius: 22px; padding: 30px; width: 100%; max-width: 460px; animation: modalEntrar 0.3s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 30px 60px rgba(0,0,0,0.4); }
+  @keyframes modalEntrar { from{opacity:0;transform:scale(0.88) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-titulo { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 6px; color: var(--texto); }
+  .modal-sub { color: var(--texto-suave); font-size: 13px; margin-bottom: 22px; }
+  .camara-preview { width: 100%; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4/3; position: relative; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  #videoEl { width: 100%; height: 100%; object-fit: cover; }
+  #canvasEl { display: none; }
+  .foto-preview { width: 100%; border-radius: 16px; display: none; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  .modal-acciones { display: flex; gap: 10px; }
+  .btn-modal { flex: 1; padding: 13px; border: none; border-radius: 13px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-modal-sec { background: var(--gris-bg); color: var(--texto); border: 1px solid var(--gris-borde); }
+  .btn-modal-sec:hover { background: var(--gris-borde); }
+  .btn-modal-pri { background: linear-gradient(135deg, var(--verde), var(--verde-vivo)); color: white; box-shadow: 0 4px 14px rgba(0,92,59,0.3); }
+  .btn-modal-pri:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,92,59,0.4); }
+  .btn-modal-pri:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* HORARIO */
+  .horario-tabla { background: white; border-radius: 18px; overflow: hidden; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); }
+  .horario-tabla table { width: 100%; border-collapse: collapse; }
+  .horario-tabla th { background: var(--oscuro); color: rgba(255,255,255,0.6); padding: 13px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+  .horario-tabla td { padding: 14px 16px; border-bottom: 1px solid var(--gris-borde); font-size: 13px; transition: background 0.2s; }
+  .horario-tabla tr:last-child td { border-bottom: none; }
+  .horario-tabla tr:hover td { background: var(--verde-bg); }
+  .dia-badge { background: var(--verde-bg); color: var(--verde); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+  /* HISTORIAL */
+  .historial-item { background: white; border-radius: 16px; padding: 16px 18px; border: 1px solid var(--gris-borde); margin-bottom: 10px; display: flex; align-items: center; gap: 14px; box-shadow: var(--sombra); transition: transform 0.2s, box-shadow 0.2s; animation: cardEntrada 0.3s ease both; }
+  .historial-item:hover { transform: translateX(4px); box-shadow: var(--sombra-hover); }
+  .hist-estado { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .hist-estado.a_tiempo { background: var(--verde-bg); }
+  .hist-estado.tardanza { background: #fff8e6; }
+  .hist-estado.ausente { background: #fff0f0; }
+  .hist-info { flex: 1; }
+  .hist-materia { font-weight: 600; font-size: 14px; }
+  .hist-detalle { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+  .hist-badge { padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .hist-badge.a_tiempo { background: var(--verde-bg); color: var(--verde); }
+  .hist-badge.tardanza { background: #fff8e6; color: #9a6e00; }
+  .hist-badge.ausente { background: #fff0f0; color: var(--rojo); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--oscuro); color: white; padding: 13px 22px; border-radius: 14px; font-size: 13px; font-weight: 500; z-index: 2000; box-shadow: 0 8px 30px rgba(0,0,0,0.3); animation: toastEntrar 0.3s ease; display: none; white-space: nowrap; }
+  .toast.verde { background: var(--verde); box-shadow: 0 8px 24px rgba(0,92,59,0.4); }
+  .toast.rojo { background: var(--rojo); }
+  @keyframes toastEntrar { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  @media(max-width:600px) {
+    nav { padding: 0 16px; }
+    .tabs-nav { padding: 0 8px; overflow-x: auto; }
+    main { padding: 16px 12px; }
+    .clase-header { flex-wrap: wrap; }
+    .modal { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-marca">
+    <div class="nav-escudo">🎓</div>
+    <div>
+      <div class="nav-nombre">Universidad de La Guajira</div>
+      <span class="nav-sub">Portal Docente</span>
+    </div>
+  </div>
+  <div class="nav-usuario">
+    <div class="nav-saludo">
+      <strong id="navNombre">Cargando...</strong>
+      Docente
+    </div>
+    <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+  </div>
+</nav>
+
+<div class="tabs-nav">
+  <button class="tab-nav-item activo" onclick="cambiarTab('hoy', this)">📅 Clases de Hoy</button>
+  <button class="tab-nav-item" onclick="cambiarTab('semana', this)">📋 Horario Semanal</button>
+  <button class="tab-nav-item" onclick="cambiarTab('historial', this)">📊 Mi Historial</button>
+</div>
+
+<main>
+  <!-- GPS -->
+  <div class="gps-card" id="gpsCard">
+    <div class="gps-header">
+      <div class="gps-icono cargando" id="gpsIcono">📡</div>
+      <div>
+        <div class="gps-titulo" id="gpsTitulo">Obteniendo ubicación...</div>
+        <div class="gps-subtitulo" id="gpsSubtitulo">Por favor espera</div>
+      </div>
+    </div>
+    <div class="gps-barra"><div class="gps-barra-fill" id="gpsBarra" style="width:0%"></div></div>
+    <div class="gps-detalle" id="gpsDetalle"></div>
+    <div id="mapaContainer" style="display:none;margin-top:14px;border-radius:12px;overflow:hidden;border:2px solid var(--gris-borde)">
+      <iframe id="mapaFrame" width="100%" height="200" style="border:none;display:block" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div id="mapaEstado" style="padding:10px 14px;font-size:13px;font-weight:600;text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- CLASES HOY -->
+  <div class="tab-contenido activo" id="tab-hoy">
+    <div class="seccion-titulo">Clases de Hoy <span class="badge-dia" id="badgeDia">...</span></div>
+    <div id="clasesContainer"><div style="text-align:center;padding:40px;color:var(--texto-suave)"><span class="spinner"></span> Cargando clases...</div></div>
+  </div>
+
+  <!-- HORARIO SEMANA -->
+  <div class="tab-contenido" id="tab-semana">
+    <div class="seccion-titulo">Horario Semanal</div>
+    <div class="horario-tabla">
+      <table>
+        <thead><tr><th>Día</th><th>Materia</th><th>Horario</th><th>Salón</th></tr></thead>
+        <tbody id="horarioTabla"><tr><td colspan="4" style="text-align:center;padding:30px;color:var(--texto-suave)">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="tab-contenido" id="tab-historial">
+    <div class="seccion-titulo">Mi Historial de Asistencia</div>
+    <div id="historialContainer"><div style="text-align:center;padding:40px;color:var(--texto-suave)"><span class="spinner"></span> Cargando historial...</div></div>
+  </div>
+</main>
+
+<!-- MODAL FOTO -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-titulo">📸 Confirmar Presencia</div>
+    <div class="modal-sub" id="modalSubtitulo">Toma una selfie para confirmar tu presencia en el salón</div>
+    <div class="camara-preview">
+      <video id="videoEl" autoplay playsinline></video>
+      <canvas id="canvasEl"></canvas>
+    </div>
+    <img id="fotoPreview" class="foto-preview" alt="Foto tomada">
+    <div class="modal-acciones">
+      <button class="btn-modal btn-modal-sec" id="btnCancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-modal btn-modal-pri" id="btnFoto" onclick="accionFoto()">📷 Tomar Foto</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = localStorage.getItem('token');
+const NOMBRE = localStorage.getItem('nombre');
+if (!TOKEN) window.location.href = '/';
+document.getElementById('navNombre').textContent = NOMBRE || 'Profesor';
+const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const ahora = new Date();
+document.getElementById('badgeDia').textContent = DIAS[ahora.getDay()];
+let ubicacionActual = null, streamCamara = null, fotoCapturada = null, horarioSeleccionado = null, fotoTomada = false;
+
+function iniciarGPS() {
+  if (!navigator.geolocation) { setGPSError('Tu navegador no soporta GPS'); return; }
+  navigator.geolocation.getCurrentPosition(
+    pos => { ubicacionActual = { lat: pos.coords.latitude, lon: pos.coords.longitude, precision: pos.coords.accuracy }; setGPSOk(); },
+    err => setGPSError('No se pudo obtener la ubicación. Permite el acceso al GPS.'),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function calcularDistanciaGPS(lat1, lon1, lat2, lon2) {
+  const R = 6371000, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function setGPSOk() {
+  const campusLat = 11.5448, campusLon = -72.8936, radioM = 400;
+  const distancia = calcularDistanciaGPS(ubicacionActual.lat, ubicacionActual.lon, campusLat, campusLon);
+  const dentroDelCampus = distancia <= radioM;
+  document.getElementById('gpsIcono').textContent = '📍';
+  document.getElementById('gpsIcono').className = 'gps-icono ok';
+  document.getElementById('gpsTitulo').textContent = 'Ubicación obtenida';
+  document.getElementById('gpsSubtitulo').textContent = 'Precisión: ±' + Math.round(ubicacionActual.precision) + 'm';
+  document.getElementById('gpsBarra').style.width = '100%';
+  document.getElementById('gpsDetalle').innerHTML = '<div class="gps-dato"><strong>±' + Math.round(ubicacionActual.precision) + 'm</strong>Precisión GPS</div><div class="gps-dato"><strong>' + Math.round(distancia) + 'm</strong>Del campus</div>';
+  const zoom = dentroDelCampus ? 17 : 15;
+  document.getElementById('mapaFrame').src = 'https://maps.google.com/maps?q=' + ubicacionActual.lat + ',' + ubicacionActual.lon + '&z=' + zoom + '&output=embed&hl=es';
+  document.getElementById('mapaContainer').style.display = 'block';
+  const estadoEl = document.getElementById('mapaEstado');
+  if (dentroDelCampus) { estadoEl.style.background = '#edfaf3'; estadoEl.style.color = '#005c3b'; estadoEl.textContent = '✅ Dentro del campus · ' + Math.round(distancia) + 'm del centro'; }
+  else { estadoEl.style.background = '#fff0f0'; estadoEl.style.color = '#c0392b'; estadoEl.textContent = '❌ Fuera del campus · a ' + Math.round(distancia) + 'm'; }
+}
+
+function setGPSError(msg) {
+  document.getElementById('gpsIcono').textContent = '⚠️';
+  document.getElementById('gpsIcono').className = 'gps-icono error';
+  document.getElementById('gpsTitulo').textContent = 'Error de ubicación';
+  document.getElementById('gpsSubtitulo').textContent = msg;
+  document.getElementById('gpsBarra').style.background = '#c0392b';
+  document.getElementById('gpsBarra').style.width = '100%';
+}
+
+function cambiarTab(tab, btn) {
+  document.querySelectorAll('.tab-contenido').forEach(t => t.classList.remove('activo'));
+  document.querySelectorAll('.tab-nav-item').forEach(t => t.classList.remove('activo'));
+  document.getElementById('tab-' + tab).classList.add('activo');
+  btn.classList.add('activo');
+  if (tab === 'semana') cargarHorarioSemana();
+  if (tab === 'historial') cargarHistorial();
+}
+
+async function cargarClasesHoy() {
+  try {
+    const res = await fetch('/api/profesor/clases-hoy', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    const clases = await res.json();
+    const cont = document.getElementById('clasesContainer');
+    if (!clases.length) { cont.innerHTML = '<div class="sin-clases"><div class="sin-clases-icono">🎉</div><h3>No tienes clases hoy</h3><p>Revisa tu horario semanal para ver tus próximas clases.</p></div>'; return; }
+    cont.innerHTML = clases.map(c => {
+      const estadoClass = c.asistencia_estado ? 'estado-registrado' : c.disponible ? 'estado-disponible' : c.mensaje.includes('expirado') ? 'estado-expirado' : 'estado-espera';
+      const esTardanza = c.disponible && c.mensaje.includes('Tardanza');
+      return '<div class="clase-card"><div class="clase-header"><div class="clase-hora-bloque"><div class="clase-hora">' + c.hora_inicio.slice(0,5) + '</div><div class="clase-hora-fin">' + c.hora_fin.slice(0,5) + '</div></div><div class="clase-info"><div class="clase-materia">' + c.materia + '</div><div class="clase-salon">📍 ' + c.salon + '</div></div><div class="clase-estado-badge ' + estadoClass + '">' + c.mensaje + '</div></div><div class="clase-body">' + (c.asistencia_estado ? '<div class="clase-ya-registrada"><span>✅ Asistencia registrada — ' + (c.asistencia_estado === 'a_tiempo' ? 'A tiempo' : 'Tardanza') + '</span></div>' : '<button class="btn-registrar ' + (esTardanza ? 'tardanza' : '') + '" onclick="abrirModal(' + c.id + ', \'' + c.materia + '\', \'' + c.salon + '\')" ' + (!c.disponible ? 'disabled' : '') + '>' + (c.disponible ? (esTardanza ? '⚠️ Registrar (Tardanza)' : '✅ Registrar Asistencia') : c.mensaje) + '</button>') + '</div></div>';
+    }).join('');
+  } catch(e) { document.getElementById('clasesContainer').innerHTML = '<div style="text-align:center;padding:40px;color:var(--rojo)">Error al cargar clases. Recarga la página.</div>'; }
+}
+
+async function cargarHorarioSemana() {
+  try {
+    const res = await fetch('/api/profesor/horario-semana', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    const horario = await res.json();
+    const tbody = document.getElementById('horarioTabla');
+    if (!horario.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--texto-suave)">No tienes horario registrado</td></tr>'; return; }
+    tbody.innerHTML = horario.map(h => '<tr><td><span class="dia-badge">' + h.dia_semana + '</span></td><td><strong>' + h.materia + '</strong></td><td>' + h.hora_inicio.slice(0,5) + ' — ' + h.hora_fin.slice(0,5) + '</td><td>' + h.salon + '</td></tr>').join('');
+  } catch(e) {}
+}
+
+async function cargarHistorial() {
+  try {
+    const res = await fetch('/api/profesor/historial', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    const hist = await res.json();
+    const cont = document.getElementById('historialContainer');
+    if (!hist.length) { cont.innerHTML = '<div style="text-align:center;padding:40px;color:var(--texto-suave)">No tienes registros de asistencia aún.</div>'; return; }
+    const iconos = { a_tiempo: '✅', tardanza: '⏰', ausente: '❌' };
+    const etiquetas = { a_tiempo: 'A tiempo', tardanza: 'Tardanza', ausente: 'Ausente' };
+    cont.innerHTML = hist.map(h => '<div class="historial-item"><div class="hist-estado ' + h.estado + '">' + iconos[h.estado] + '</div><div class="hist-info"><div class="hist-materia">' + h.materia + '</div><div class="hist-detalle">' + h.bloque + ' · ' + new Date(h.fecha).toLocaleDateString('es-CO', {weekday:'short',year:'numeric',month:'short',day:'numeric'}) + ' · ' + h.hora_inicio.slice(0,5) + '</div></div><div class="hist-badge ' + h.estado + '">' + etiquetas[h.estado] + (h.minutos_tarde > 0 ? ' (+' + h.minutos_tarde + 'min)' : '') + '</div></div>').join('');
+  } catch(e) {}
+}
+
+async function abrirModal(horarioId, materia, salon) {
+  if (!ubicacionActual) { mostrarToast('⚠️ Espera a que el GPS obtenga tu ubicación', 'rojo'); return; }
+  horarioSeleccionado = horarioId; fotoTomada = false; fotoCapturada = null;
+  document.getElementById('modalSubtitulo').textContent = materia + ' · ' + salon;
+  document.getElementById('fotoPreview').style.display = 'none';
+  document.getElementById('videoEl').style.display = 'block';
+  document.getElementById('btnFoto').textContent = '📷 Tomar Foto';
+  document.getElementById('modalOverlay').classList.add('abierto');
+  try {
+    streamCamara = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    document.getElementById('videoEl').srcObject = streamCamara;
+  } catch(e) { mostrarToast('No se pudo acceder a la cámara', 'rojo'); cerrarModal(); }
+}
+
+function accionFoto() {
+  if (!fotoTomada) {
+    const video = document.getElementById('videoEl'), canvas = document.getElementById('canvasEl');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    fotoCapturada = canvas.toDataURL('image/jpeg', 0.7);
+    document.getElementById('fotoPreview').src = fotoCapturada;
+    document.getElementById('fotoPreview').style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('btnFoto').textContent = '✅ Confirmar y Registrar';
+    fotoTomada = true;
+    if (streamCamara) streamCamara.getTracks().forEach(t => t.stop());
+  } else { enviarAsistencia(); }
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('abierto');
+  if (streamCamara) streamCamara.getTracks().forEach(t => t.stop());
+  fotoTomada = false; fotoCapturada = null;
+}
+
+async function enviarAsistencia() {
+  const btn = document.getElementById('btnFoto');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Registrando...';
+  try {
+    const res = await fetch('/api/profesor/registrar-asistencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN },
+      body: JSON.stringify({ horario_id: horarioSeleccionado, latitud: ubicacionActual.lat, longitud: ubicacionActual.lon, foto_base64: fotoCapturada })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    cerrarModal();
+    mostrarToast(data.estado === 'a_tiempo' ? '✅ Asistencia registrada a tiempo' : '⏰ Asistencia con tardanza (+' + data.minutos_tarde + ' min)', data.estado === 'a_tiempo' ? 'verde' : '');
+    setTimeout(cargarClasesHoy, 1000);
+  } catch(e) { mostrarToast(e.message, 'rojo'); btn.disabled = false; btn.textContent = '✅ Confirmar y Registrar'; }
+}
+
+function mostrarToast(msg, tipo = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + tipo; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+function cerrarSesion() { localStorage.clear(); window.location.href = '/'; }
+
+iniciarGPS();
+cargarClasesHoy();
+</script>
+</body>
+</html>
