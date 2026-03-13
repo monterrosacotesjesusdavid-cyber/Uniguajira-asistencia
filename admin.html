@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Administrativo — Universidad de La Guajira</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --verde: #006847; --verde-claro: #00a86b; --verde-bg: #f0f9f4;
+    --dorado: #c9a84c; --dorado-claro: #e8c97a;
+    --oscuro: #0a1a12; --blanco: #fff;
+    --gris-bg: #f5f7f5; --gris-borde: #e2ebe4;
+    --texto: #1c2b22; --texto-suave: #5a7060;
+    --rojo: #c0392b; --naranja: #e67e22;
+    --sombra: 0 4px 20px rgba(0,104,71,0.1);
+    --sidebar-w: 260px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gris-bg); color: var(--texto); display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: var(--sidebar-w); background: var(--oscuro);
+    position: fixed; top: 0; left: 0; height: 100vh;
+    display: flex; flex-direction: column; overflow-y: auto; z-index: 100;
+  }
+  .sidebar-logo { padding: 28px 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sidebar-escudo {
+    width: 48px; height: 48px; background: linear-gradient(135deg, var(--verde), var(--verde-claro));
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin-bottom: 14px;
+  }
+  .sidebar-uni { font-family: 'Playfair Display', serif; color: var(--dorado-claro); font-size: 13px; letter-spacing: 1px; }
+  .sidebar-sistema { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px; }
+  .sidebar-admin { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 12px; }
+  .admin-avatar { width: 38px; height: 38px; background: var(--verde); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .admin-nombre { color: white; font-size: 13px; font-weight: 500; }
+  .admin-rol { color: rgba(255,255,255,0.4); font-size: 11px; }
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+  .nav-grupo-titulo { color: rgba(255,255,255,0.25); font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 12px 12px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px;
+    color: rgba(255,255,255,0.55); font-size: 14px; cursor: pointer; transition: all 0.2s;
+    margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+  .nav-item.activo { background: var(--verde); color: white; }
+  .nav-item .icono { font-size: 18px; width: 24px; text-align: center; }
+  .sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .btn-salir-side {
+    width: 100%; padding: 11px 14px; border-radius: 10px;
+    background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.2);
+    color: rgba(255,100,80,0.8); font-size: 13px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s; text-align: left;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .btn-salir-side:hover { background: rgba(192,57,43,0.25); color: #ff8070; }
+
+  .main-content { margin-left: var(--sidebar-w); flex: 1; }
+  .topbar {
+    background: white; padding: 20px 32px;
+    border-bottom: 1px solid var(--gris-borde);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 2px 10px rgba(0,104,71,0.06);
+  }
+  .topbar-titulo { font-family: 'Playfair Display', serif; font-size: 22px; }
+  .topbar-fecha { color: var(--texto-suave); font-size: 13px; }
+  .contenido { padding: 32px; }
+  .seccion { display: none; }
+  .seccion.activa { display: block; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: white; border-radius: 16px; padding: 24px 20px; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); position: relative; overflow: hidden; }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--verde), var(--verde-claro)); }
+  .stat-icono { font-size: 28px; margin-bottom: 12px; }
+  .stat-numero { font-size: 36px; font-weight: 700; color: var(--texto); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--texto-suave); margin-top: 4px; }
+
+  .tabla-card { background: white; border-radius: 16px; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); overflow: hidden; }
+  .tabla-header { padding: 20px 24px; border-bottom: 1px solid var(--gris-borde); display: flex; align-items: center; justify-content: space-between; }
+  .tabla-header-titulo { font-weight: 600; font-size: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--gris-bg); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--texto-suave); border-bottom: 1px solid var(--gris-borde); }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--gris-borde); font-size: 14px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--verde-bg); }
+
+  .btn { padding: 10px 20px; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-verde { background: var(--verde); color: white; }
+  .btn-verde:hover { background: #005538; box-shadow: 0 4px 15px rgba(0,104,71,0.3); }
+  .btn-rojo { background: #fef0f0; color: var(--rojo); border: 1px solid rgba(192,57,43,0.2); }
+  .btn-rojo:hover { background: var(--rojo); color: white; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-verde { background: var(--verde-bg); color: var(--verde); }
+  .badge-rojo { background: #fef0f0; color: var(--rojo); }
+  .badge-naranja { background: #fff8e6; color: #b7830a; }
+
+  .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.abierto { display: flex; }
+  .modal { background: white; border-radius: 20px; padding: 32px; width: 100%; max-width: 520px; animation: modalEntrar 0.3s cubic-bezier(0.16,1,0.3,1); max-height: 90vh; overflow-y: auto; }
+  @keyframes modalEntrar { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+  .modal-titulo { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 6px; }
+  .modal-sub { color: var(--texto-suave); font-size: 13px; margin-bottom: 24px; }
+  .campo-form { margin-bottom: 16px; }
+  .campo-form label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--texto-suave); margin-bottom: 6px; }
+  .campo-form input, .campo-form select { width: 100%; padding: 12px 14px; border: 1px solid var(--gris-borde); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--texto); background: var(--gris-bg); outline: none; transition: all 0.2s; }
+  .campo-form input:focus, .campo-form select:focus { border-color: var(--verde); background: white; box-shadow: 0 0 0 3px rgba(0,104,71,0.1); }
+  .modal-footer { display: flex; gap: 12px; margin-top: 24px; }
+
+  .codigo-hint { background: var(--verde-bg); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--verde); margin-top: 6px; }
+
+  .filtros { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filtro-input { padding: 10px 14px; border: 1px solid var(--gris-borde); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: white; outline: none; transition: border 0.2s; }
+  .filtro-input:focus { border-color: var(--verde); }
+
+  .foto-modal-img { width: 100%; border-radius: 10px; margin-top: 12px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--oscuro); color: white; padding: 14px 24px; border-radius: 12px; font-size: 14px; z-index: 2000; box-shadow: 0 8px 30px rgba(0,0,0,0.3); display: none; }
+  .toast.verde { background: var(--verde); }
+  .toast.rojo { background: var(--rojo); }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,104,71,0.3); border-top-color: var(--verde); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OTORGAR HORARIO */
+  .prof-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 200px; overflow-y: auto; }
+  .prof-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border: 2px solid var(--gris-borde); border-radius: 12px; cursor: pointer;
+    transition: all 0.2s; background: white;
+  }
+  .prof-item:hover { border-color: var(--verde-claro); background: var(--verde-bg); }
+  .prof-item.seleccionado { border-color: var(--verde); background: var(--verde-bg); }
+  .prof-avatar { width: 38px; height: 38px; background: var(--verde); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .prof-nombre { font-weight: 600; font-size: 14px; }
+  .prof-correo { font-size: 12px; color: var(--texto-suave); }
+
+  .form-horario { display: none; }
+  .form-horario.visible { display: block; }
+
+  @media(max-width:768px) {
+    .sidebar { transform: translateX(-100%); }
+    .main-content { margin-left: 0; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .contenido { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-escudo">🎓</div>
+    <div class="sidebar-uni">Universidad de La Guajira</div>
+    <div class="sidebar-sistema">Panel Administrativo</div>
+  </div>
+  <div class="sidebar-admin">
+    <div class="admin-avatar">👤</div>
+    <div>
+      <div class="admin-nombre" id="adminNombre">Admin</div>
+      <div class="admin-rol">Administrador</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-grupo-titulo">Principal</div>
+    <button class="nav-item activo" onclick="ir('dashboard', this)"><span class="icono">📊</span> Dashboard</button>
+    <button class="nav-item" onclick="ir('asistencias', this)"><span class="icono">📋</span> Asistencias</button>
+    <button class="nav-item" onclick="ir('estadisticas', this)"><span class="icono">📈</span> Estadísticas</button>
+    <div class="nav-grupo-titulo">Gestión</div>
+    <button class="nav-item" onclick="ir('profesores', this)"><span class="icono">👨‍🏫</span> Profesores</button>
+    <button class="nav-item" onclick="ir('horarios', this)"><span class="icono">🗓️</span> Otorgar Horario</button>
+    <button class="nav-item" onclick="ir('salones', this)"><span class="icono">🏫</span> Salones</button>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn-salir-side" onclick="cerrarSesion()"><span>🚪</span> Cerrar Sesión</button>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div>
+      <div class="topbar-titulo" id="topbarTitulo">Dashboard</div>
+      <div class="topbar-fecha" id="topbarFecha"></div>
+    </div>
+  </div>
+
+  <div class="contenido">
+
+    <!-- DASHBOARD -->
+    <div class="seccion activa" id="sec-dashboard">
+      <div class="stats-grid" id="statsGrid"><div style="text-align:center;padding:40px;grid-column:1/-1"><span class="spinner"></span></div></div>
+      <div class="tabla-card">
+        <div class="tabla-header"><div class="tabla-header-titulo">Asistencias de Hoy</div></div>
+        <table><thead><tr><th>Profesor</th><th>Materia</th><th>Salón</th><th>Hora</th><th>Estado</th></tr></thead>
+        <tbody id="asistenciasHoy"><tr><td colspan="5" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ASISTENCIAS -->
+    <div class="seccion" id="sec-asistencias">
+      <div class="filtros">
+        <input type="date" class="filtro-input" id="filtroFecha" onchange="cargarAsistencias()">
+        <select class="filtro-input" id="filtroProfesor" onchange="cargarAsistencias()"><option value="">Todos los profesores</option></select>
+        <button class="btn btn-verde" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="tabla-card">
+        <table><thead><tr><th>Profesor</th><th>Cédula</th><th>Materia</th><th>Salón</th><th>Hora</th><th>Estado</th><th>Foto</th></tr></thead>
+        <tbody id="tablaAsistencias"><tr><td colspan="7" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="seccion" id="sec-estadisticas">
+      <div class="tabla-card">
+        <div class="tabla-header"><div class="tabla-header-titulo">Resumen por Profesor</div></div>
+        <table><thead><tr><th>Profesor</th><th>Cédula</th><th>A Tiempo</th><th>Tardanzas</th><th>Ausencias</th><th>Total</th></tr></thead>
+        <tbody id="tablaEstadisticas"><tr><td colspan="6" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- PROFESORES -->
+    <div class="seccion" id="sec-profesores">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-verde" onclick="abrirModalProfesor()">+ Nuevo Profesor</button>
+      </div>
+      <div class="tabla-card">
+        <table><thead><tr><th>Nombre</th><th>Correo</th><th>Cédula</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody id="tablaProfesores"><tr><td colspan="5" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- OTORGAR HORARIO -->
+    <div class="seccion" id="sec-horarios">
+      <div class="tabla-card" style="margin-bottom:24px">
+        <div class="tabla-header">
+          <div class="tabla-header-titulo">Otorgar Horario a Profesor</div>
+        </div>
+        <div style="padding:24px">
+          <p style="color:var(--texto-suave);font-size:14px;margin-bottom:16px">Selecciona un profesor y asígnale su salón y horario:</p>
+          <div class="prof-lista" id="profLista"><div style="text-align:center;padding:20px"><span class="spinner"></span></div></div>
+          <div class="form-horario" id="formHorario">
+            <div style="background:var(--verde-bg);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">✅</span>
+              <div>
+                <div style="font-weight:600;font-size:14px" id="profSelNombre">Profesor seleccionado</div>
+                <div style="font-size:12px;color:var(--texto-suave)" id="profSelCorreo"></div>
+              </div>
+            </div>
+            <div class="campo-form">
+              <label>Código del Salón</label>
+              <input type="text" id="codigoSalon" placeholder="Ej: 6103" maxlength="4">
+              <div class="codigo-hint">📍 El código tiene 4 dígitos: Bloque + Piso + Salón. Ej: <strong>6103</strong> = Bloque 6, Piso 1, Salón 03</div>
+            </div>
+            <div class="campo-form">
+              <label>Materia</label>
+              <input type="text" id="horMateria" placeholder="Ej: Cálculo I">
+            </div>
+            <div class="campo-form">
+              <label>Día</label>
+              <select id="horDia">
+                <option>Lunes</option><option>Martes</option><option>Miércoles</option>
+                <option>Jueves</option><option>Viernes</option><option>Sábado</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="campo-form">
+                <label>Hora Inicio</label>
+                <input type="time" id="horInicio">
+              </div>
+              <div class="campo-form">
+                <label>Hora Fin</label>
+                <input type="time" id="horFin">
+              </div>
+            </div>
+            <button class="btn btn-verde" style="width:100%;padding:14px;font-size:15px" onclick="guardarHorario()">✅ Otorgar Horario</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabla-card">
+        <div class="tabla-header"><div class="tabla-header-titulo">Horarios Asignados</div></div>
+        <table><thead><tr><th>Profesor</th><th>Materia</th><th>Día</th><th>Horario</th><th>Salón</th><th>Acciones</th></tr></thead>
+        <tbody id="tablaHorarios"><tr><td colspan="6" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- SALONES -->
+    <div class="seccion" id="sec-salones">
+      <div class="tabla-card">
+        <div class="tabla-header"><div class="tabla-header-titulo">Salones Registrados</div></div>
+        <table><thead><tr><th>Bloque</th><th>Piso</th><th>Salón</th><th>Nombre Completo</th></tr></thead>
+        <tbody id="tablaSalones"><tr><td colspan="4" style="text-align:center;padding:30px"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL PROFESOR -->
+<div class="modal-overlay" id="modalProfesor">
+  <div class="modal">
+    <div class="modal-titulo" id="modalProfesorTitulo">Nuevo Profesor</div>
+    <div class="modal-sub">Completa los datos del docente</div>
+    <input type="hidden" id="profId">
+    <div class="campo-form"><label>Nombre completo</label><input type="text" id="profNombre"></div>
+    <div class="campo-form"><label>Correo institucional</label><input type="email" id="profCorreo"></div>
+    <div class="campo-form"><label>Cédula</label><input type="text" id="profCedula"></div>
+    <div class="campo-form"><label>Contraseña</label><input type="password" id="profPassword" placeholder="Dejar vacío para no cambiar"></div>
+    <div class="campo-form"><label>Estado</label><select id="profActivo"><option value="1">Activo</option><option value="0">Inactivo</option></select></div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--gris-borde)" onclick="cerrarModales()">Cancelar</button>
+      <button class="btn btn-verde" onclick="guardarProfesor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FOTO -->
+<div class="modal-overlay" id="modalFoto">
+  <div class="modal">
+    <div class="modal-titulo">📸 Foto de Asistencia</div>
+    <img id="fotoModalImg" class="foto-modal-img" src="" alt="Foto">
+    <div class="modal-footer"><button class="btn btn-verde" style="width:100%" onclick="cerrarModales()">Cerrar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = localStorage.getItem('token');
+if (!TOKEN || localStorage.getItem('rol') !== 'admin') window.location.href = '/';
+document.getElementById('adminNombre').textContent = localStorage.getItem('nombre') || 'Admin';
+
+const hoy = new Date();
+document.getElementById('topbarFecha').textContent = hoy.toLocaleDateString('es-CO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+document.getElementById('filtroFecha').value = hoy.toISOString().split('T')[0];
+
+const API = (url, opts={}) => fetch('/api/admin' + url, {
+  headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json', ...opts.headers },
+  ...opts
+}).then(r => r.json());
+
+const titulos = { dashboard:'Dashboard', asistencias:'Asistencias', estadisticas:'Estadísticas', profesores:'Profesores', horarios:'Otorgar Horario', salones:'Salones' };
+let profSeleccionado = null;
+
+function ir(seccion, btn) {
+  document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+  document.getElementById('sec-' + seccion).classList.add('activa');
+  if (btn) btn.classList.add('activo');
+  document.getElementById('topbarTitulo').textContent = titulos[seccion];
+  cargarSeccion(seccion);
+}
+
+function cargarSeccion(s) {
+  if (s === 'dashboard') cargarDashboard();
+  else if (s === 'asistencias') { cargarAsistencias(); cargarProfesoresFiltro(); }
+  else if (s === 'estadisticas') cargarEstadisticas();
+  else if (s === 'profesores') cargarProfesores();
+  else if (s === 'horarios') { cargarProfesoresLista(); cargarHorarios(); }
+  else if (s === 'salones') cargarSalones();
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────
+async function cargarDashboard() {
+  const data = await API('/dashboard');
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-icono">👨‍🏫</div><div class="stat-numero">${data.total_profesores}</div><div class="stat-label">Total Docentes</div></div>
+    <div class="stat-card"><div class="stat-icono">✅</div><div class="stat-numero">${data.presentes_hoy}</div><div class="stat-label">Presentes Hoy</div></div>
+    <div class="stat-card"><div class="stat-icono">⏰</div><div class="stat-numero">${data.tardanzas_hoy}</div><div class="stat-label">Tardanzas Hoy</div></div>
+    <div class="stat-card"><div class="stat-icono">❌</div><div class="stat-numero">${data.ausentes_hoy < 0 ? 0 : data.ausentes_hoy}</div><div class="stat-label">Ausentes Hoy</div></div>
+  `;
+  const asist = await API('/asistencias?fecha=' + hoy.toISOString().split('T')[0]);
+  const tbody = document.getElementById('asistenciasHoy');
+  if (!asist.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--texto-suave)">Sin registros hoy</td></tr>'; return; }
+  tbody.innerHTML = asist.map(a => `
+    <tr>
+      <td><strong>${a.profesor_nombre}</strong></td>
+      <td>${a.materia}</td>
+      <td>${a.salon}</td>
+      <td>${new Date(a.hora_registro).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td><span class="badge ${a.estado==='a_tiempo'?'badge-verde':a.estado==='tardanza'?'badge-naranja':'badge-rojo'}">${a.estado==='a_tiempo'?'A tiempo':a.estado==='tardanza'?'Tardanza':'Ausente'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ─── ASISTENCIAS ──────────────────────────────────────────────────
+async function cargarProfesoresFiltro() {
+  const profs = await API('/profesores');
+  document.getElementById('filtroProfesor').innerHTML = '<option value="">Todos los profesores</option>' + profs.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+}
+
+async function cargarAsistencias() {
+  const fecha = document.getElementById('filtroFecha').value;
+  const profId = document.getElementById('filtroProfesor').value;
+  let url = '/asistencias?';
+  if (fecha) url += `fecha=${fecha}&`;
+  if (profId) url += `profesor_id=${profId}`;
+  const data = await API(url);
+  const tbody = document.getElementById('tablaAsistencias');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--texto-suave)">Sin registros</td></tr>'; return; }
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td><strong>${a.profesor_nombre}</strong></td>
+      <td>${a.cedula}</td>
+      <td>${a.materia}</td>
+      <td>${a.salon}</td>
+      <td>${new Date(a.hora_registro).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td><span class="badge ${a.estado==='a_tiempo'?'badge-verde':a.estado==='tardanza'?'badge-naranja':'badge-rojo'}">${a.estado==='a_tiempo'?'A tiempo':a.estado==='tardanza'?`Tardanza (+${a.minutos_tarde}min)`:'Ausente'}</span></td>
+      <td>${a.foto_base64 ? `<button class="btn btn-sm" onclick="verFoto('${a.foto_base64}')">Ver foto</button>` : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function exportarCSV() {
+  const rows = [['Profesor','Cédula','Materia','Salón','Fecha','Hora','Estado']];
+  document.querySelectorAll('#tablaAsistencias tr').forEach(tr => {
+    const celdas = [...tr.querySelectorAll('td')].slice(0,6).map(td => td.textContent.trim());
+    if (celdas.length) rows.push(celdas);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `asistencias_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+}
+
+// ─── ESTADÍSTICAS ─────────────────────────────────────────────────
+async function cargarEstadisticas() {
+  const data = await API('/asistencias/estadisticas');
+  const tbody = document.getElementById('tablaEstadisticas');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">Sin datos</td></tr>'; return; }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><strong>${p.nombre}</strong></td><td>${p.cedula}</td>
+      <td><span class="badge badge-verde">${p.a_tiempo}</span></td>
+      <td><span class="badge badge-naranja">${p.tardanzas}</span></td>
+      <td><span class="badge badge-rojo">${p.ausencias}</span></td>
+      <td>${p.total_registros}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── PROFESORES ──────────────────────────────────────────────────
+async function cargarProfesores() {
+  const data = await API('/profesores');
+  const tbody = document.getElementById('tablaProfesores');
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><strong>${p.nombre}</strong></td>
+      <td>${p.correo}</td>
+      <td>${p.cedula}</td>
+      <td><span class="badge ${p.activo?'badge-verde':'badge-rojo'}">${p.activo?'Activo':'Inactivo'}</span></td>
+      <td style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-verde" onclick="editarProfesor(${p.id},'${p.nombre}','${p.correo}','${p.cedula}',${p.activo})">Editar</button>
+        <button class="btn btn-sm btn-rojo" onclick="eliminarProfesor(${p.id})">Desactivar</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function abrirModalProfesor() {
+  document.getElementById('profId').value = '';
+  document.getElementById('profNombre').value = '';
+  document.getElementById('profCorreo').value = '';
+  document.getElementById('profCedula').value = '';
+  document.getElementById('profPassword').value = '';
+  document.getElementById('modalProfesorTitulo').textContent = 'Nuevo Profesor';
+  document.getElementById('modalProfesor').classList.add('abierto');
+}
+
+function editarProfesor(id, nombre, correo, cedula, activo) {
+  document.getElementById('profId').value = id;
+  document.getElementById('profNombre').value = nombre;
+  document.getElementById('profCorreo').value = correo;
+  document.getElementById('profCedula').value = cedula;
+  document.getElementById('profActivo').value = activo ? '1' : '0';
+  document.getElementById('modalProfesorTitulo').textContent = 'Editar Profesor';
+  document.getElementById('modalProfesor').classList.add('abierto');
+}
+
+async function guardarProfesor() {
+  const id = document.getElementById('profId').value;
+  const body = { nombre: document.getElementById('profNombre').value, correo: document.getElementById('profCorreo').value, cedula: document.getElementById('profCedula').value, password: document.getElementById('profPassword').value, activo: document.getElementById('profActivo').value === '1' };
+  const res = id ? await API(`/profesores/${id}`, { method:'PUT', body: JSON.stringify(body) }) : await API('/profesores', { method:'POST', body: JSON.stringify(body) });
+  if (res.success || res.id) { cerrarModales(); cargarProfesores(); mostrarToast('✅ Guardado correctamente', 'verde'); }
+  else mostrarToast(res.error || 'Error', 'rojo');
+}
+
+async function eliminarProfesor(id) {
+  if (!confirm('¿Desactivar este profesor?')) return;
+  await API(`/profesores/${id}`, { method:'DELETE' });
+  cargarProfesores();
+}
+
+// ─── OTORGAR HORARIO ─────────────────────────────────────────────
+async function cargarProfesoresLista() {
+  const profs = await API('/profesores');
+  const lista = document.getElementById('profLista');
+  const activos = profs.filter(p => p.activo);
+  if (!activos.length) { lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto-suave)">No hay profesores activos</div>'; return; }
+  lista.innerHTML = activos.map(p => `
+    <div class="prof-item" onclick="seleccionarProfesor(${p.id}, '${p.nombre}', '${p.correo}')" id="prof-${p.id}">
+      <div class="prof-avatar">${p.nombre[0]}</div>
+      <div>
+        <div class="prof-nombre">${p.nombre}</div>
+        <div class="prof-correo">${p.correo}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function seleccionarProfesor(id, nombre, correo) {
+  profSeleccionado = id;
+  document.querySelectorAll('.prof-item').forEach(i => i.classList.remove('seleccionado'));
+  document.getElementById('prof-' + id).classList.add('seleccionado');
+  document.getElementById('profSelNombre').textContent = nombre;
+  document.getElementById('profSelCorreo').textContent = correo;
+  document.getElementById('formHorario').classList.add('visible');
+}
+
+async function guardarHorario() {
+  if (!profSeleccionado) { mostrarToast('Selecciona un profesor', 'rojo'); return; }
+  const codigo = document.getElementById('codigoSalon').value.trim();
+  if (codigo.length !== 4) { mostrarToast('El código del salón debe tener 4 dígitos', 'rojo'); return; }
+  const body = {
+    profesor_id: profSeleccionado,
+    codigo_salon: codigo,
+    materia: document.getElementById('horMateria').value,
+    dia_semana: document.getElementById('horDia').value,
+    hora_inicio: document.getElementById('horInicio').value,
+    hora_fin: document.getElementById('horFin').value
+  };
+  const res = await API('/otorgar-horario', { method:'POST', body: JSON.stringify(body) });
+  if (res.success) {
+    mostrarToast(`✅ Horario otorgado — ${res.salon}`, 'verde');
+    document.getElementById('formHorario').classList.remove('visible');
+    document.querySelectorAll('.prof-item').forEach(i => i.classList.remove('seleccionado'));
+    profSeleccionado = null;
+    document.getElementById('codigoSalon').value = '';
+    document.getElementById('horMateria').value = '';
+    cargarHorarios();
+  } else {
+    mostrarToast(res.error || 'Error', 'rojo');
+  }
+}
+
+async function cargarHorarios() {
+  const data = await API('/horarios');
+  const tbody = document.getElementById('tablaHorarios');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--texto-suave)">Sin horarios asignados</td></tr>'; return; }
+  tbody.innerHTML = data.map(h => `
+    <tr>
+      <td><strong>${h.profesor_nombre}</strong></td>
+      <td>${h.materia}</td>
+      <td><span class="badge badge-verde">${h.dia_semana}</span></td>
+      <td>${h.hora_inicio.slice(0,5)} — ${h.hora_fin.slice(0,5)}</td>
+      <td>${h.salon}</td>
+      <td><button class="btn btn-sm btn-rojo" onclick="eliminarHorario(${h.id})">Eliminar</button></td>
+    </tr>
+  `).join('');
+}
+
+async function eliminarHorario(id) {
+  if (!confirm('¿Eliminar este horario?')) return;
+  await API(`/horarios/${id}`, { method:'DELETE' });
+  cargarHorarios();
+}
+
+// ─── SALONES ──────────────────────────────────────────────────────
+async function cargarSalones() {
+  const data = await API('/salones');
+  const tbody = document.getElementById('tablaSalones');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:var(--texto-suave)">Sin salones registrados aún</td></tr>'; return; }
+  tbody.innerHTML = data.map(s => `<tr><td>${s.bloque_nombre}</td><td>${s.piso}</td><td>${s.numero}</td><td>${s.nombre_completo}</td></tr>`).join('');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function verFoto(foto) {
+  document.getElementById('fotoModalImg').src = foto;
+  document.getElementById('modalFoto').classList.add('abierto');
+}
+
+function cerrarModales() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('abierto')); }
+
+function mostrarToast(msg, tipo='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${tipo}`; t.style.display = 'block';
+  setTimeout(() => t.style.display='none', 3500);
+}
+
+function cerrarSesion() { localStorage.clear(); window.location.href = '/'; }
+
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) cerrarModales(); }));
+
+cargarDashboard();
+</script>
+</body>
+</html>
