@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Asistencia — Universidad de La Guajira</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --verde: #005c3b; --verde-vivo: #00a86b;
+    --dorado: #c9a84c; --dorado-claro: #f0d080;
+    --oscuro: #040f09; --blanco: #ffffff;
+  }
+  html, body { height: 100%; font-family: 'Outfit', sans-serif; overflow: hidden; }
+
+  .bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 15% 60%, #002a1a 0%, #040f09 55%, #000 100%);
+  }
+  .bg::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(-55deg, transparent, transparent 60px, rgba(0,104,71,0.03) 60px, rgba(0,104,71,0.03) 61px);
+  }
+
+  .orbe { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+  .orbe-1 { width: 600px; height: 600px; background: radial-gradient(circle, #004d2e, transparent 70%); top: -200px; left: -150px; animation: drift1 12s ease-in-out infinite; }
+  .orbe-2 { width: 450px; height: 450px; background: radial-gradient(circle, #1a0a00, transparent 70%); bottom: -100px; right: -100px; animation: drift2 15s ease-in-out infinite; }
+  .orbe-3 { width: 250px; height: 250px; background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%); top: 30%; right: 10%; animation: drift3 10s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-40px)} }
+  @keyframes drift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,30px)} }
+  @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-20px,20px) scale(1.1)} }
+
+  .linea-lateral { position: fixed; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, transparent, #00a86b 40%, #c9a84c 60%, transparent); opacity: 0.6; }
+
+  .container { position: relative; z-index: 10; display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+  .panel-izq { display: flex; flex-direction: column; justify-content: center; padding: 60px; animation: fadeLeft 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes fadeLeft { from{opacity:0;transform:translateX(-40px)} to{opacity:1;transform:translateX(0)} }
+
+  .uni-badge { display: inline-flex; align-items: center; gap: 10px; background: rgba(0,168,107,0.1); border: 1px solid rgba(0,168,107,0.25); border-radius: 100px; padding: 8px 18px; margin-bottom: 40px; width: fit-content; }
+  .uni-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #00a86b; box-shadow: 0 0 8px #00a86b; animation: pulsar 2s ease-in-out infinite; }
+  @keyframes pulsar { 0%,100%{box-shadow:0 0 8px #00a86b} 50%{box-shadow:0 0 20px #00a86b} }
+  .uni-badge-text { color: rgba(255,255,255,0.6); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; }
+
+  .titulo-hero { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: clamp(42px,4.5vw,64px); font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
+  .titulo-hero em { font-style: italic; background: linear-gradient(135deg, var(--dorado), var(--dorado-claro)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .desc { color: rgba(255,255,255,0.35); font-size: 15px; line-height: 1.7; max-width: 380px; margin-bottom: 48px; font-weight: 300; }
+
+  .stats-row { display: flex; gap: 32px; }
+  .stat { border-left: 2px solid rgba(0,168,107,0.3); padding-left: 16px; }
+  .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; color: #00a86b; line-height: 1; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+
+  .panel-der { display: flex; align-items: center; justify-content: center; padding: 40px; animation: fadeRight 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+  @keyframes fadeRight { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+
+  .card { background: rgba(255,255,255,0.03); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; padding: 48px 44px; width: 100%; max-width: 420px; box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06); position: relative; }
+  .card::before { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: radial-gradient(circle at top right, rgba(201,168,76,0.12), transparent 70%); border-radius: 0 28px 0 0; pointer-events: none; }
+
+  .card-icon { width: 56px; height: 56px; background: linear-gradient(135deg, var(--verde), var(--verde-vivo)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,168,107,0.3); animation: iconEntrada 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
+  @keyframes iconEntrada { from{transform:scale(0.5) rotate(-10deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+  .card-titulo { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 26px; font-weight: 600; margin-bottom: 6px; }
+  .card-sub { color: rgba(255,255,255,0.3); font-size: 13px; margin-bottom: 32px; }
+
+  .tabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; margin-bottom: 28px; border: 1px solid rgba(255,255,255,0.06); }
+  .tab { flex: 1; padding: 10px 16px; border: none; background: transparent; border-radius: 9px; color: rgba(255,255,255,0.35); font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.25s; }
+  .tab.activo { background: var(--verde); color: white; box-shadow: 0 4px 16px rgba(0,92,59,0.5); }
+
+  .campo { margin-bottom: 16px; }
+  label { display: block; color: rgba(255,255,255,0.4); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .input-wrap { position: relative; }
+  .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; opacity: 0.4; }
+
+  input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 13px 16px 13px 42px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 14px; transition: all 0.25s; outline: none; }
+  input:focus { border-color: rgba(0,168,107,0.5); background: rgba(0,168,107,0.06); box-shadow: 0 0 0 3px rgba(0,168,107,0.1); }
+  input::placeholder { color: rgba(255,255,255,0.15); }
+
+  .btn-login { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--verde), var(--verde-vivo)); border: none; border-radius: 14px; color: white; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: all 0.3s; position: relative; overflow: hidden; letter-spacing: 0.5px; box-shadow: 0 8px 24px rgba(0,92,59,0.4); }
+  .btn-login::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transition: left 0.5s; }
+  .btn-login:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0,92,59,0.55); }
+  .btn-login:hover::before { left: 150%; }
+  .btn-login:active { transform: translateY(0); }
+  .btn-login.cargando { opacity: 0.7; pointer-events: none; }
+  .btn-login span { position: relative; z-index: 1; }
+
+  .error-msg { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.25); border-radius: 10px; padding: 12px 16px; color: #ff8080; font-size: 13px; margin-top: 14px; display: none; animation: shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  .footer-card { text-align: center; margin-top: 28px; color: rgba(255,255,255,0.15); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+
+  @media (max-width: 768px) {
+    .container { grid-template-columns: 1fr; }
+    .panel-izq { display: none; }
+    .panel-der { padding: 24px; min-height: 100vh; }
+    .card { padding: 36px 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="orbe orbe-1"></div>
+<div class="orbe orbe-2"></div>
+<div class="orbe orbe-3"></div>
+<div class="linea-lateral"></div>
+
+<div class="container">
+  <div class="panel-izq">
+    <div class="uni-badge">
+      <div class="uni-badge-dot"></div>
+      <span class="uni-badge-text">Sistema Activo</span>
+    </div>
+    <h1 class="titulo-hero">Control de<br><em>Asistencia</em><br>Docente</h1>
+    <p class="desc">Plataforma institucional de registro de presencia con verificación GPS y reconocimiento facial en tiempo real.</p>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num">GPS</div><div class="stat-label">Verificación</div></div>
+      <div class="stat"><div class="stat-num">JWT</div><div class="stat-label">Seguridad</div></div>
+      <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Disponible</div></div>
+    </div>
+  </div>
+
+  <div class="panel-der">
+    <div class="card">
+      <div class="card-icon">🎓</div>
+      <div class="card-titulo">Bienvenido</div>
+      <div class="card-sub">Universidad de La Guajira — Portal institucional</div>
+
+      <div class="tabs">
+        <button class="tab activo" onclick="setRol('profesor')">👨‍🏫 Profesor</button>
+        <button class="tab" onclick="setRol('admin')">🛡️ Administrador</button>
+      </div>
+
+      <form id="formLogin" onsubmit="handleLogin(event)">
+        <div class="campo">
+          <label>Correo institucional</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="correo" placeholder="correo@uniguajira.edu.co" required autocomplete="username">
+          </div>
+        </div>
+        <div class="campo">
+          <label>Contraseña</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+        <button type="submit" class="btn-login" id="btnLogin">
+          <span id="btnTexto">Ingresar al Sistema</span>
+        </button>
+        <div class="error-msg" id="errorMsg"></div>
+      </form>
+      <div class="footer-card">© 2025 Universidad de La Guajira</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let rolActual = 'profesor';
+  function setRol(rol) {
+    rolActual = rol;
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('activo', (rol === 'profesor' && i === 0) || (rol === 'admin' && i === 1));
+    });
+  }
+  async function handleLogin(e) {
+    e.preventDefault();
+    const correo = document.getElementById('correo').value;
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('btnLogin');
+    const btnTexto = document.getElementById('btnTexto');
+    const errorMsg = document.getElementById('errorMsg');
+    btn.classList.add('cargando');
+    btnTexto.textContent = 'Verificando...';
+    errorMsg.style.display = 'none';
+    try {
+      const res = await fetch(`/api/auth/${rolActual}/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión');
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('nombre', data.nombre);
+      localStorage.setItem('rol', rolActual);
+      btnTexto.textContent = '✓ Acceso concedido';
+      setTimeout(() => { window.location.href = rolActual === 'admin' ? '/admin' : '/profesor'; }, 600);
+    } catch (err) {
+      errorMsg.textContent = err.message;
+      errorMsg.style.display = 'block';
+      btn.classList.remove('cargando');
+      btnTexto.textContent = 'Ingresar al Sistema';
+    }
+  }
+  const token = localStorage.getItem('token');
+  const rol = localStorage.getItem('rol');
+  if (token && rol) window.location.href = rol === 'admin' ? '/admin' : '/profesor';
+</script>
+</body>
+</html>
